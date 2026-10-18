@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wearable Signals Lab: longitudinal trends</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#eef2f4;--panel:#fff;--ink:#14232b;--mute:#53656e;--line:#d3dde2;--teal:#0f766e;--amber:#b45309;--flag:rgba(180,83,9,.16);--warn:#fdf0d5;--warnink:#5c3a05;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a20;--panel:#172730;--ink:#e6eef1;--mute:#9db0b8;--line:#2b414c;--teal:#2dd4bf;--amber:#f5a524;--flag:rgba(245,165,36,.2);--warn:#3a2c0e;--warnink:#f6dca4}}
+:root[data-theme="dark"]{--bg:#0f1a20;--panel:#172730;--ink:#e6eef1;--mute:#9db0b8;--line:#2b414c;--teal:#2dd4bf;--amber:#f5a524;--flag:rgba(245,165,36,.2);--warn:#3a2c0e;--warnink:#f6dca4}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Public Sans",system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 18px 60px}
+h1,h2{font-family:Newsreader,Georgia,serif;font-weight:600;margin:0}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;max-width:20ch}
+h2{font-size:22px;margin-bottom:4px}
+.sub{color:var(--mute);max-width:62ch;margin:10px 0 0}
+.notice{background:var(--warn);color:var(--warnink);border-left:5px solid var(--amber);padding:12px 16px;margin:22px 0;border-radius:4px;max-width:80ch}
+.notice b{font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;margin-bottom:20px}
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:end;margin:14px 0}
+.controls label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:4px}
+.controls label.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
+select,input[type=range]{font:inherit;color:var(--ink)}
+select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.out{color:var(--ink);font-weight:600}
+.cv{position:relative;height:320px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.stat{border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.stat span{display:block;font-size:12.5px;color:var(--mute)}
+.stat b{font-size:22px;font-family:Newsreader,serif}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.mx td,.mx th{text-align:center;padding:0}
+.mx th{font-weight:500;font-size:12.5px;padding:6px 8px;color:var(--mute)}
+.mx button{width:100%;min-width:58px;height:44px;border:1px solid var(--bg);background:none;color:var(--ink);font:inherit;cursor:pointer}
+.mx button[aria-pressed=true]{outline:3px solid var(--ink);outline-offset:-3px}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;border:1px solid var(--amber);color:var(--amber);font-size:12.5px;margin-right:4px}
+.cap{color:var(--mute);font-size:13.5px;max-width:75ch;margin:10px 0 0}
+ul.q{padding-left:20px;margin:8px 0 0}ul.q li{margin:7px 0;max-width:80ch}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media(max-width:700px){.two{grid-template-columns:1fr}}
+[hidden]{display:none!important}
+.btn{font:inherit;background:var(--teal);color:var(--panel);border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+.lk{background:none;border:0;color:var(--teal);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+fieldset{border:1px solid var(--line);border-radius:6px;display:flex;flex-wrap:wrap;gap:6px 16px;margin:0}
+legend{font-size:13px;color:var(--mute)}
+details{margin-top:12px}summary{cursor:pointer;font-weight:600}
+footer{color:var(--mute);font-size:13px;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Wearable signals, read as trajectories</h1>
+<p class="sub">A student research dashboard for exploring daily heart rate, HRV, sleep, activity and skin temperature records. It is a first step into FAIR Labs' digital-biomarker programme: look at how a person changes over time, not at single readings.</p>
+<div class="notice"><b>Wellness indicators, not diagnosis.</b> These signals describe how one body drifts from its own usual pattern. A flagged day means "different from this person's recent baseline", never "ill" or "healthy". Only a clinician can diagnose. Demo data is synthetic. Records from real people need consent and ethics approval first.</div>
+
+<section class="panel" aria-labelledby="t0">
+<h2 id="t0">Data</h2>
+<p class="cap" style="margin-top:0">Load a CSV of daily records for one person or many. The file is read inside your browser and is never uploaded.</p>
+<div class="controls">
+ <label>CSV file<input id="file" type="file" accept=".csv,.txt"></label>
+ <button class="btn" id="demo" type="button">Use demo data</button>
+ <label>Person<select id="person"></select></label>
+</div>
+<div class="controls" id="map" hidden>
+ <label>Date column<select id="cDate"></select></label>
+ <label>Person column<select id="cPerson"></select></label>
+ <label>Reference label, 0 or 1 (optional)<select id="cLabel"></select></label>
+ <fieldset id="cSigs"></fieldset>
+</div>
+<p class="cap" id="dmsg" role="status"></p>
+<details><summary>What the file should contain</summary>
+<div class="scroll"><table>
+<tr><th>Column</th><th>Needed</th><th>Notes</th></tr>
+<tr><td>date</td><td>Required</td><td>One row per person per day, written YYYY-MM-DD</td></tr>
+<tr><td>person_id</td><td>Optional</td><td>An anonymous code such as P01, never a name or email. Leave out for one person</td></tr>
+<tr><td>Signal columns</td><td>At least one</td><td>Any numeric columns, for example resting_hr, hrv_ms, sleep_hours, steps, skin_temp_dev. Blank cells count as missing</td></tr>
+<tr><td>Reference label</td><td>Optional</td><td>A 0/1 column such as self_reported_unwell. It lets the dashboard report precision and recall</td></tr>
+</table></div>
+<ul class="q"><li>Each person needs at least 14 days of data, and 60 or more days works much better.</li><li>Missing days are fine. They are left as gaps and never filled in.</li><li>If your device exports hourly or per-minute rows, aggregate to one row per day first. Rows sharing a date are averaged.</li><li>Use consistent units for each column across all people.</li></ul>
+</details>
+</section>
+
+<section class="panel" aria-labelledby="t1">
+<h2 id="t1">1. Trends and anomaly detection</h2>
+<p class="cap" style="margin-top:0">Each day is compared with the median of the previous days. Shaded days are flagged when enough signals move far from that personal baseline.</p>
+<div class="controls">
+ <label>Signal<select id="sig"></select></label>
+ <label>Baseline window <span class="out" id="oW">14</span> days<input id="W" type="range" min="7" max="30" value="14"></label>
+ <label>Threshold <span class="out" id="oT">3</span> robust z<input id="T" type="range" min="2" max="4.5" step=".25" value="3"></label>
+ <label>Signals needed <span class="out" id="oK">2</span> of <span id="nK">5</span><input id="K" type="range" min="1" max="4" value="2"></label>
+ <label class="chk"><input id="roll" type="checkbox" checked>7-day average</label>
+</div>
+<div class="stats" id="stats"></div>
+<div class="cv"><canvas id="trend" role="img" aria-label="Line chart of the selected signal over 120 days with flagged days shaded"></canvas></div>
+<h2 style="font-size:18px;margin-top:22px">Flagged days</h2>
+<div class="scroll"><table id="flags"></table></div>
+<h2 style="font-size:18px;margin-top:22px">People in this file</h2>
+<div class="scroll"><table id="coh"></table></div>
+</section>
+
+<section class="panel" aria-labelledby="t2">
+<h2 id="t2">2. Correlations between signals</h2>
+<p class="cap" style="margin-top:0">Rows are signal A today; columns are signal B after the chosen lag. Select a cell to see the scatter plot.</p>
+<div class="controls">
+ <label>Lag for B<select id="lag"><option value="0">same day</option><option value="1" selected>next day</option><option value="2">two days later</option></select></label>
+ <label class="chk"><input id="dev" type="checkbox">Use deviations from baseline instead of raw values</label>
+</div>
+<div class="grid2">
+ <div class="scroll"><table class="mx" id="mx"></table></div>
+ <div><div class="cv" style="height:260px"><canvas id="sc" role="img" aria-label="Scatter plot of the selected pair of signals"></canvas></div><p class="cap" id="scc"></p></div>
+</div>
+<p class="cap">Try switching between raw values and deviations. Slow trends (for example gradual fitness gains) can create correlations that vanish once each day is compared with its own baseline. Daily data from one person is autocorrelated, so treat r as a description, not a test result.</p>
+</section>
+
+<section class="panel" aria-labelledby="t3">
+<h2 id="t3">3. What this can and cannot say</h2>
+<div class="two">
+<div><b>Reasonable claims</b><ul class="q"><li>Several signals moved together away from this person’s own recent baseline.</li><li>A lagged correlation was present in this sample.</li><li>One-signal flags are often sensor or context artefacts.</li></ul></div>
+<div><b>Not supportable</b><ul class="q"><li>"This person had an infection." No clinical test supports that.</li><li>"Low HRV causes high heart rate." Correlation says nothing about cause.</li><li>Any conclusion about other people from one person's data.</li></ul></div>
+</div>
+</section>
+
+<footer>Files are processed locally in your browser. The demo data comes from a seeded generator with a planted 6-day episode, a sensor glitch and a very short night.</footer>
+</div>
+<script>
+let N=120;const START=new Date(2026,4,1);
+let S={rhr:{n:'Resting heart rate',u:'bpm',d:1},hrv:{n:'HRV (RMSSD)',u:'ms',d:0},sleep:{n:'Sleep duration',u:'h',d:1},steps:{n:'Daily steps',u:'',d:0},temp:{n:'Skin temp. deviation',u:'°C',d:2}};
+let K5=Object.keys(S);
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const r=rng(42),g=()=>{let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*r())};
+let D=[],dates=[];
+for(let i=0;i<N;i++){
+ const d=new Date(START);d.setDate(d.getDate()+i);dates.push(d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
+ const wk=[0,6].includes(d.getDay()),ill=(i>=70&&i<=75)?(i<=72?1:.6):0,p=D[i-1];
+ let sleep=7+(wk?.6:0)+g()*.6-ill*.7, steps=(7500+(wk?1500:0)+g()*1800)*(1-.45*ill);
+ let rhr=58-i*.015+(7-(p?p.sleep:7))*1.2+g()*1.1+ill*7;
+ let hrv=62+i*.04-(rhr-58)*1.6+g()*4-ill*12, temp=g()*.15+ill*.8;
+ if(i===95)sleep=3.2;
+ if(i===40)rhr+=32;
+ D.push({sleep:Math.max(sleep,2),steps:Math.max(steps,800),rhr,hrv:Math.max(hrv,15),temp});
+}
+const DEMO_S=S,DEMO_P={dates:dates.slice(),D:D.slice(),L:D.map((_,i)=>i>=70&&i<=75?1:0)};
+let PEOPLE={'Demo (synthetic)':DEMO_P},L=null,RAW={head:[],rows:[]};
+const med=a=>{const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+const st={person:'Demo (synthetic)',sig:'rhr',W:14,T:3,K:2,roll:true,lag:1,dev:false,pair:['sleep','rhr']};
+let Z={},FL=[],trend,sc;
+function compute(){
+ K5.forEach(k=>{Z[k]=D.map((d,i)=>{if(i<st.W||d[k]==null)return null;const w=D.slice(i-st.W,i).map(x=>x[k]).filter(v=>v!=null);if(w.length<Math.ceil(st.W/2))return null;const m=med(w),mad=Math.max(med(w.map(x=>Math.abs(x-m)))*1.4826,1e-6);return(d[k]-m)/mad})});
+ FL=D.map((_,i)=>{const s=K5.filter(k=>Z[k][i]!==null&&Math.abs(Z[k][i])>=st.T);return{i,s}}).filter(f=>f.s.length>=st.K);
+}
+const f=(v,k)=>v.toFixed(S[k].d).replace(/\B(?=(\d{3})+(?!\d))/g,k==='steps'?',':'');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function rollAvg(a,n=7){return a.map((_,i)=>{if(i<n-1)return null;const w=a.slice(i-n+1,i+1).filter(v=>v!=null);return w.length>=4?w.reduce((x,y)=>x+y,0)/w.length:null})}
+const shade={id:'shade',beforeDatasetsDraw(c){const{ctx,chartArea:a,scales:{x}}=c,w=(x.getPixelForValue(1)-x.getPixelForValue(0))/2;ctx.save();ctx.fillStyle=css('--flag');FL.forEach(o=>ctx.fillRect(x.getPixelForValue(o.i)-w,a.top,w*2,a.bottom-a.top));ctx.restore()}};
+function drawTrend(){
+ const k=st.sig,v=D.map(d=>d[k]),ink=css('--ink'),mute=css('--mute'),line=css('--line');
+ const ds=[{label:S[k].n,data:v,borderColor:css('--mute'),backgroundColor:css('--mute'),pointRadius:2,borderWidth:1,tension:.2}];
+ if(st.roll)ds.push({label:'7-day average',data:rollAvg(v),borderColor:css('--teal'),pointRadius:0,borderWidth:3,tension:.3});
+ if(trend)trend.destroy();
+ trend=new Chart('trend',{type:'line',data:{labels:dates,datasets:ds},plugins:[shade],options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{labels:{color:ink}},tooltip:{callbacks:{afterBody:i=>{const o=FL.find(x=>x.i===i[0].dataIndex);return o?'Flagged: '+o.s.map(s=>S[s].n).join(', '):''}}}},
+  scales:{x:{ticks:{color:mute,maxTicksLimit:10},grid:{display:false}},y:{title:{display:true,text:S[k].n+(S[k].u?' ('+S[k].u+')':''),color:mute},ticks:{color:mute},grid:{color:line}}}}});
+}
+function drawStats(){
+ const k=st.sig,v=D.map(d=>d[k]).filter(x=>x!=null),n=v.length||1,m=v.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/n);
+ document.getElementById('stats').innerHTML=[['Days with data',v.length],['Mean',f(m,k)+' '+S[k].u],['Std. deviation',f(sd,k)],['Flagged days',FL.length+' of '+N],['Flagged on this signal',FL.filter(o=>o.s.includes(k)).length],...evalTiles()].map(a=>`<div class="stat"><span>${a[0]}</span><b>${a[1]}</b></div>`).join('');
+}
+function drawFlags(){
+ const rows=FL.map(o=>{const n=o.s.length,note=n===1?'Single signal: check sensor or context first':n>=3?'Several signals moved together':'Two signals moved together';
+  return`<tr><td>${dates[o.i]} (day ${o.i+1})</td><td>${o.s.map(s=>`<span class="tag">${S[s].n} ${Z[s][o.i]>0?'+':''}${Z[s][o.i].toFixed(1)}</span>`).join('')}</td><td>${note}</td></tr>`}).join('');
+ document.getElementById('flags').innerHTML='<tr><th>Date</th><th>Signals beyond threshold (robust z)</th><th>Reading</th></tr>'+(rows||'<tr><td colspan="3">No days flagged. Lower the threshold or the number of signals needed.</td></tr>');
+}
+function series(k){return st.dev?Z[k]:D.map(d=>d[k])}
+function corr(a,b){const p=[];for(let i=0;i+st.lag<N;i++){const x=a[i],y=b[i+st.lag];if(x!=null&&y!=null)p.push([x,y])}
+ if(p.length<5)return{r:NaN,p};const n=p.length,mx=p.reduce((s,q)=>s+q[0],0)/n,my=p.reduce((s,q)=>s+q[1],0)/n;let sxy=0,sx=0,sy=0;p.forEach(q=>{sxy+=(q[0]-mx)*(q[1]-my);sx+=(q[0]-mx)**2;sy+=(q[1]-my)**2});return{r:sxy/Math.sqrt(sx*sy),p}}
+function drawMx(){
+ let h='<tr><th></th>'+K5.map(k=>`<th>${S[k].n}</th>`).join('')+'</tr>';
+ K5.forEach(a=>{h+=`<tr><th style="text-align:right">${S[a].n}</th>`+K5.map(b=>{const{r:c}=corr(series(a),series(b)),al=(Math.abs(c)*.75)||0,col=c>=0?'15,118,110':'180,83,9',on=st.pair[0]===a&&st.pair[1]===b;
+  return`<td><button data-a="${a}" data-b="${b}" aria-pressed="${on}" aria-label="${S[a].n} vs ${S[b].n}, r ${c.toFixed(2)}" style="background:rgba(${col},${al})">${isNaN(c)?'–':c.toFixed(2)}</button></td>`}).join('')+'</tr>'});
+ const t=document.getElementById('mx');t.innerHTML=h;
+ t.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.pair=[b.dataset.a,b.dataset.b];drawMx();drawSc()});
+}
+function drawSc(){
+ const[a,b]=st.pair,{r:c,p}=corr(series(a),series(b)),mute=css('--mute'),line=css('--line'),u=st.dev?' (z)':'';
+ if(sc)sc.destroy();
+ sc=new Chart('sc',{type:'scatter',data:{datasets:[{data:p.map(q=>({x:q[0],y:q[1]})),backgroundColor:css('--teal'),pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},
+  scales:{x:{title:{display:true,text:S[a].n+' today'+u,color:mute},ticks:{color:mute},grid:{color:line}},y:{title:{display:true,text:S[b].n+(st.lag?` (+${st.lag} d)`:'')+u,color:mute},ticks:{color:mute},grid:{color:line}}}}});
+ document.getElementById('scc').textContent=`r = ${c.toFixed(2)} from ${p.length} paired days. `+(a===b&&st.lag===0?'A signal always matches itself.':'Positive means both rise together; negative means one rises as the other falls.');
+}
+function all(){compute();drawStats();drawTrend();drawFlags();drawMx();drawSc();drawCohort()}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function use(id){st.person=id;const P=PEOPLE[id];D=P.D;dates=P.dates;L=P.L||null;N=D.length;$('person').value=id}
+function setData(people,meta,msg,pair){PEOPLE=people;S=meta;K5=Object.keys(S);const ids=Object.keys(PEOPLE);
+ $('person').innerHTML='';ids.forEach(i=>$('person').add(new Option(i,i)));
+ $('sig').innerHTML='';K5.forEach(k=>$('sig').add(new Option(S[k].n,k)));
+ st.sig=K5[0];st.pair=pair||[K5[Math.min(1,K5.length-1)],K5[0]];
+ st.K=Math.min(st.K,K5.length);$('K').max=K5.length;$('K').value=st.K;$('oK').textContent=st.K;$('nK').textContent=K5.length;
+ $('dmsg').textContent=msg;use(ids[0]);all()}
+function evalPR(){if(!L)return null;const fl=new Set(FL.map(o=>o.i));let tp=0,pos=0;L.forEach((v,i)=>{if(v===1&&i>=st.W){pos++;if(fl.has(i))tp++}});return{p:FL.length?Math.round(100*tp/FL.length)+'%':'n/a',r:pos?Math.round(100*tp/pos)+'%':'n/a'}}
+function evalTiles(){const e=evalPR();return e?[['Precision vs reference',e.p],['Recall vs reference',e.r]]:[]}
+function drawCohort(){const cur=st.person,ids=Object.keys(PEOPLE);
+ const rows=ids.map((id,i)=>{use(id);compute();const c={};FL.forEach(o=>o.s.forEach(x=>c[x]=(c[x]||0)+1));const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0],e=evalPR();
+  return`<tr><td><button class="lk" data-i="${i}">${esc(id)}</button></td><td>${N}</td><td>${FL.length}</td><td>${Math.round(100*FL.length/N)}%</td><td>${top?S[top].n:'none'}</td><td>${e?e.p+' / '+e.r:'\u2013'}</td></tr>`});
+ use(cur);compute();
+ $('coh').innerHTML='<tr><th>Person</th><th>Days</th><th>Flagged</th><th>Flag rate</th><th>Most flagged signal</th><th>Precision / recall</th></tr>'+rows.join('')}
+function parseCSV(t){const rows=[];let row=[],c='',q=false;
+ const end=()=>{row.push(c);c='';if(row.some(x=>x.trim()!==''))rows.push(row);row=[]};
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch=='"'&&t[i+1]=='"'){c+='"';i++}else if(ch=='"')q=false;else c+=ch}
+  else if(ch=='"')q=true;else if(ch==','||ch=='\t'){row.push(c);c=''}
+  else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;end()}else c+=ch}
+ end();return rows}
+function dayNum(s){s=(s||'').trim();const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return Date.UTC(+m[1],m[2]-1,+m[3])/864e5;if(s.length<6)return null;const d=new Date(s);return isNaN(d)?null:Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5}
+function renderSigs(){const h=RAW.head,ex=[+$('cDate').value,+$('cPerson').value,+$('cLabel').value];
+ const num=j=>{const v=RAW.rows.map(r=>(r[j]||'').trim()).filter(x=>x!=='');return v.length>0&&v.filter(x=>isFinite(+x)).length/v.length>=.7};
+ $('cSigs').innerHTML='<legend>Signal columns</legend>'+h.map((x,j)=>ex.includes(j)||!num(j)?'':`<label class="chk"><input type="checkbox" value="${j}" checked>${esc(x)}</label>`).join('')}
+function guess(){const h=RAW.head;let dc=h.findIndex(x=>/date/i.test(x));if(dc<0)dc=h.findIndex(x=>/day|time/i.test(x));if(dc<0)dc=0;
+ const pc=h.findIndex((x,j)=>j!==dc&&/person|participant|subject|user|patient|^id$|_id$/i.test(x));
+ const lc=h.findIndex((x,j)=>j!==dc&&j!==pc&&/label|event|unwell|symptom/i.test(x));
+ const fill=(id,none,sel)=>{const e=$(id);e.innerHTML='';if(none)e.add(new Option(none,-1));h.forEach((x,j)=>e.add(new Option(x,j)));e.value=sel};
+ fill('cDate',null,dc);fill('cPerson','(single person)',pc);fill('cLabel','(none)',lc);$('map').hidden=false;renderSigs()}
+function build(){
+ const dc=+$('cDate').value,pc=+$('cPerson').value,lc=+$('cLabel').value,sg=[...document.querySelectorAll('#cSigs input:checked')].map(x=>+x.value);
+ if(!sg.length){$('dmsg').textContent='Tick at least one signal column.';return}
+ const keys=sg.map((j,n)=>(RAW.head[j].replace(/[^\w]+/g,'_')||'col')+(n?'':'')),by={};let bad=0;
+ RAW.rows.forEach(r=>{const dd=dayNum(r[dc]);if(dd==null){bad++;return}
+  const id=pc>=0?(r[pc]||'').trim()||'unknown':'Person 1',o=by[id]=by[id]||{},a=o[dd]=o[dd]||{};
+  sg.forEach((j,n)=>{const v=parseFloat(r[j]);if(isFinite(v))(a[keys[n]]=a[keys[n]]||[]).push(v)});
+  if(lc>=0){const v=parseFloat(r[lc]);if(isFinite(v))a._L=Math.max(a._L==null?0:a._L,v>0?1:0)}});
+ const people={},vals={},skip=[];
+ Object.keys(by).forEach(id=>{const days=Object.keys(by[id]).map(Number).sort((x,y)=>x-y);
+  if(days.length<14||days[days.length-1]-days[0]>3000){skip.push(id);return}
+  const P={dates:[],D:[],L:lc>=0?[]:null};
+  for(let d=days[0];d<=days[days.length-1];d++){const a=by[id][d]||{},row={};
+   keys.forEach(k=>{row[k]=a[k]?a[k].reduce((x,y)=>x+y,0)/a[k].length:null;if(row[k]!=null)(vals[k]=vals[k]||[]).push(row[k])});
+   P.D.push(row);P.dates.push(new Date(d*864e5).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit',timeZone:'UTC'}));if(P.L)P.L.push(a._L==null?null:a._L)}
+  people[id]=P});
+ const ids=Object.keys(people);
+ if(!ids.length){$('dmsg').textContent='No person has 14 days with readable dates. Check the date column and use YYYY-MM-DD.';return}
+ const meta={};keys.forEach((k,n)=>{const v=(vals[k]||[]).map(Math.abs).sort((a,b)=>a-b),m=v.length?v[v.length>>1]:1;meta[k]={n:esc(RAW.head[sg[n]].replace(/[_\-]+/g,' ')),u:'',d:m>=100?0:m>=10?1:2}});
+ setData(people,meta,`Loaded ${ids.length} ${ids.length>1?'people':'person'}, ${ids.reduce((t,i)=>t+people[i].D.length,0)} days, ${keys.length} signals.`+(bad?` ${bad} rows skipped (unreadable date).`:'')+(skip.length?` Skipped (under 14 days): ${skip.map(esc).join(', ')}.`:''))}
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+ rd.onload=()=>{const t=parseCSV(String(rd.result));if(t.length<3){$('dmsg').textContent='The file needs a header row and at least two data rows.';return}
+  RAW={head:t[0].map(x=>x.replace(/^\uFEFF/,'').trim()),rows:t.slice(1)};guess();build()};rd.readAsText(f)};
+['cDate','cPerson','cLabel'].forEach(i=>$(i).onchange=()=>{renderSigs();build()});
+$('cSigs').onchange=build;
+$('person').onchange=e=>{use(e.target.value);all()};
+$('coh').onclick=e=>{const b=e.target.closest('button');if(b){use(Object.keys(PEOPLE)[+b.dataset.i]);all()}};
+$('demo').onclick=()=>{$('map').hidden=true;$('file').value='';setData({'Demo (synthetic)':DEMO_P},DEMO_S,'Showing synthetic demo data for one person. Upload a CSV to use real records.',['sleep','rhr'])};
+setData(PEOPLE,DEMO_S,'Showing synthetic demo data for one person. Upload a CSV to use real records.',['sleep','rhr']);
+$('sig').onchange=e=>{st.sig=e.target.value;drawStats();drawTrend()};
+[['W','oW'],['T','oT'],['K','oK']].forEach(([i,o])=>$(i).oninput=e=>{st[i]=+e.target.value;$(o).textContent=e.target.value;all()});
+$('roll').onchange=e=>{st.roll=e.target.checked;drawTrend()};
+$('lag').onchange=e=>{st.lag=+e.target.value;drawMx();drawSc()};
+$('dev').onchange=e=>{st.dev=e.target.checked;drawMx();drawSc()};
+all();
+</script>
+</body>
+</html>
