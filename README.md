@@ -1,1 +1,1 @@
-# AimlPBL
+A analytical health dashboard, which uses bio-markers that can be tracked on a day to day basis, such as Heart rate, sleep duration, lifestyle, total activity , total steps, max heart rate etc. It processes them and provides a visual graph comprising of last 7 days duration, and monitors any anomaly presented during these last 7 days, which ultimately helps predict if there's any underlying issue being ignored.  
